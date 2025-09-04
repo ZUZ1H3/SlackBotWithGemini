@@ -1,8 +1,11 @@
 package com.zuzihe.slackbot.controller;
 
+import com.zuzihe.slackbot.service.SlackService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 import java.util.Map;
 
 /*
@@ -24,27 +27,22 @@ response_url=https://hooks.slack.com/...
 
 @RestController
 @RequestMapping("/slack")
+@RequiredArgsConstructor
 public class SlackController {
 
+    private final SlackService slackService;
+
     @PostMapping(value = "/commands", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public ResponseEntity<String> handleCommand(@RequestParam Map<String, String> params) {
-        System.out.println(" Slash Command 도착!");
-        System.out.println("params = " + params);
+    public Mono<ResponseEntity<String>> handleCommand(@RequestParam Map<String, String> params) {
+        String question = params.get("text");
 
-        // Slack 응답 (에코용)
-        String responseText = "AI에게 보낸 질문: " + params.get("text");
+        return slackService.ask(question)
+                .map(answer -> {
+                    String responseJson = "%s".formatted(answer);
 
-        // Slack에 응답 보낼 JSON
-        String responseJson = """
-        {
-          "response_type": "ephemeral",
-          "text": "%s"
-        }
-        """.formatted(responseText);
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(responseJson);
+                    return ResponseEntity.ok()
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(responseJson);
+                });
     }
 }
-
