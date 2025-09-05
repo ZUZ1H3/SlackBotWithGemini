@@ -1,6 +1,7 @@
 package com.zuzihe.slackbot.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +13,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SlackService {
     private final WebClient webClient;
+    private final SlackWebClient slackWebClient; // Slack API 전용
 
     @Value("${gemini.api.url}")
     private String geminiApiUrl;
@@ -19,9 +21,12 @@ public class SlackService {
     @Value("${gemini.api.key}")
     private String geminiApiKey;
 
-    public Mono<String> ask(String question) {
+    @Async
+    public void askAndSendToSlack(String channelId, String question) {
         String prompt = buildPrompt(question);
-        return callGemini(prompt);
+        callGemini(prompt).subscribe(answer -> {
+            slackWebClient.sendMessage(channelId, answer);
+        });
     }
 
     private Mono<String> callGemini(String prompt) {

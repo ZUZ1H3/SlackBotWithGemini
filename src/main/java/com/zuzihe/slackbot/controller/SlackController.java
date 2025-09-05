@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
 import java.util.Map;
 
 /*
@@ -33,16 +32,14 @@ public class SlackController {
     private final SlackService slackService;
 
     @PostMapping(value = "/commands", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public Mono<ResponseEntity<String>> handleCommand(@RequestParam Map<String, String> params) {
+    public ResponseEntity<String> handleCommand(@RequestParam Map<String, String> params) {
+        String userId = params.get("user_id");
+        String channelId = params.get("channel_id");
         String question = params.get("text");
 
-        return slackService.ask(question)
-                .map(answer -> {
-                    String responseJson = "%s".formatted(answer);
+        // 비동기로 처리 (3초 안에 OK만 보내기)
+        slackService.askAndSendToSlack(channelId, question);
 
-                    return ResponseEntity.ok()
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .body(responseJson);
-                });
+        return ResponseEntity.ok("질문을 받았습니다! 잠시만요…");
     }
 }
