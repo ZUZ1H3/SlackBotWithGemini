@@ -1,16 +1,28 @@
 package com.zuzihe.slackbot.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zuzihe.slackbot.dto.SlackOAuthResponse;
 import com.zuzihe.slackbot.service.SlackService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/slack")
 @RequiredArgsConstructor
 public class SlackController {
+    @Value("${slack.client-id}")
+    private String slackClientId;
+
+    @Value("${slack.client-secret}")
+    private String slackClientSecret;
 
     private final SlackService slackService;
 
@@ -51,12 +63,56 @@ public class SlackController {
             if ("app_mention".equals(eventType)) {
                 String text = (String) event.get("text"); // 사용자가 입력한 전체 메시지 텍스트
                 String channel = (String) event.get("channel"); // 메시지가 발생한 채널 ID (예: C12345678)
-                String user = (String) event.get("user"); // 메시지를 보낸 사용자 ID (예: U12345678)
+                String userId = (String) event.get("user"); // 메시지를 보낸 사용자 ID (예: U12345678)
 
                 // Gemini API 호출 + Slack 메시지 전송 로직 수행
                 slackService.askAndSendToSlack(channel, text);
+            } else if ("app_home_opened".equals(eventType)) {
+                String userId = (String) event.get("user"); // 홈탭을 연 사용자 ID
+
+                // 홈 탭 뷰 표시 (Slack Web API - views.publish)
+                slackService.publishHomeView(userId);
             }
         }
         return ResponseEntity.ok("OK");
     }
+
+    // 기존 SlackController 내부에 추가
+    @GetMapping("/oauth/callback")
+    public ResponseEntity<String> handleSlackOAuthCallback(
+            @RequestParam String code,
+            @RequestParam(required = false) String state
+    ) throws JsonProcessingException {
+        log.info("✅ Slack callback 도착! code = {}, state = {}", code, state);
+
+        WebClient webClient = WebClient.create();
+        String rawJson = webClient.post()
+                .uri("https://slack.com/api/oauth.v2.access")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("code=" + code +
+                        "&client_id=" + slackClientId +
+                        "&client_secret=" + slackClientSecret +
+                        "&redirect_uri=https://753b87b79cff.ngrok-free.app/slack/oauth/callback")
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        log.info("📦 Slack OAuth 응답 원문:\n{}", rawJson);
+
+        // JSON 문자열 → DTO로 파싱
+        ObjectMapper objectMapper = new ObjectMapper();
+        SlackOAuthResponse response = objectMapper.readValue(rawJson, SlackOAuthResponse.class);
+
+        log.info("🔍 SlackOAuthResponse 매핑 결과: {}", response);
+
+        if (!response.isOk()) {
+            return ResponseEntity.status(500).body("❌ Slack OAuth 실패: " + response.getError());
+        }
+
+        slackService.saveInstalledWorkspace(response);
+
+        return ResponseEntity.ok("✅ Slack 앱 설치 완료!");
+    }
+
+
 }
