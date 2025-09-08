@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true) // 👈 이거 추가!
+@JsonIgnoreProperties(ignoreUnknown = true)
 
 public class SlackOAuthResponse {
     private boolean ok;

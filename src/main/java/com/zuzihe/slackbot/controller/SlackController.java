@@ -92,12 +92,12 @@ public class SlackController {
                 .bodyValue("code=" + code +
                         "&client_id=" + slackClientId +
                         "&client_secret=" + slackClientSecret +
-                        "&redirect_uri=https://753b87b79cff.ngrok-free.app/slack/oauth/callback")
+                        "&redirect_uri=https://039e0385f8f9.ngrok-free.app/slack/oauth/callback")
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
 
-        log.info("📦 Slack OAuth 응답 원문:\n{}", rawJson);
+        log.info("Slack OAuth 응답 원문:\n{}", rawJson);
 
         // JSON 문자열 → DTO로 파싱
         ObjectMapper objectMapper = new ObjectMapper();
@@ -111,7 +111,7 @@ public class SlackController {
 
         slackService.saveInstalledWorkspace(response);
 
-        return ResponseEntity.ok("✅ Slack 앱 설치 완료!");
+        return ResponseEntity.ok("Slack 앱 설치 완료!");
     }
 
 
