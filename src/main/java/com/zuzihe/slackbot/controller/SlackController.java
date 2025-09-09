@@ -79,42 +79,7 @@ public class SlackController {
         return ResponseEntity.ok("OK");
     }
 
-    //
-    @GetMapping("/oauth/callback")
-    public ResponseEntity<String> handleSlackOAuthCallback(
-            @RequestParam String code,
-            @RequestParam(required = false) String state
-    ) throws JsonProcessingException {
-        log.info("Slack callback 도착! code = {}, state = {}", code, state);
 
-        WebClient webClient = WebClient.create();
-        String rawJson = webClient.post()
-                .uri("https://slack.com/api/oauth.v2.access")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue("code=" + code +
-                        "&client_id=" + slackClientId +
-                        "&client_secret=" + slackClientSecret +
-                        "&redirect_uri=https://949ac40aa5c9.ngrok-free.app/slack/oauth/callback")
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
-
-        log.info("Slack OAuth 응답 원문:\n{}", rawJson);
-
-        // JSON 문자열 → DTO로 파싱
-        ObjectMapper objectMapper = new ObjectMapper();
-        SlackOAuthResponse response = objectMapper.readValue(rawJson, SlackOAuthResponse.class);
-
-        log.info("🔍 SlackOAuthResponse 매핑 결과: {}", response);
-
-        if (!response.isOk()) {
-            return ResponseEntity.status(500).body("Slack OAuth 실패: " + response.getError());
-        }
-
-        slackService.saveInstalledWorkspace(response);
-
-        return ResponseEntity.ok("Slack 앱 설치 완료!");
-    }
 
     @PostMapping(value = "/interactive", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<String> handleInteractive(@RequestParam("payload") String payload) throws JsonProcessingException {
