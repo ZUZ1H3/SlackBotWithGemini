@@ -69,9 +69,8 @@ public class SlackService {
     private String buildPrompt(String question) {
 
         return """
-                당신의 이름은 한교동 입니다. 답변하기 전 자기소개를 하세요.
-                당신의 목적은 정보를 보기좋게 주는 것이 아닌, 사람과의 대화입니다.
-                일상에서 말하듯 대화하세요. 이모지를 사용하지 마세요.
+                당신의 이름은 aichatter 입니다. 답변하기 전 자기소개를 하세요.
+                이모지를 사용하지 마세요.
 
             [질문]
             """ + question;
@@ -82,14 +81,18 @@ public class SlackService {
 
     public void saveInstalledWorkspace(SlackOAuthResponse response) {
         if (response.getTeam() == null) {
-            log.error("❌ team 정보가 Slack 응답에 없습니다.");
+            log.error("team 정보가 Slack 응답에 없습니다.");
             throw new IllegalStateException("Slack 응답에 team 정보 없음");
         }
 
-        String teamId = response.getTeam().getId();  // 안전해짐
+        String teamId = response.getTeam().getId();
         String botToken = response.getAccess_token();
 
         // team_id와 bot_token 등을 DB에 저장
         // 예: workspace 테이블에 insert or update
+    }
+
+    public void updateHomeViewWithLoginLink(String userId, String loginUrl) {
+        slackWebClient.updateHomeViewWithLoginLink(userId, loginUrl);
     }
 }

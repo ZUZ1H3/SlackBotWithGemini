@@ -1,11 +1,13 @@
 package com.zuzihe.slackbot.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 public class SlackWebClient {
 
@@ -202,7 +204,7 @@ public class SlackWebClient {
                                 "type", "button",
                                 "text", Map.of("type", "plain_text", "text", "🔗 aichatter 로그인하기"),
                                 "style", "primary",
-                                "url", "https://aichatter.ai/slack/login?slack_user_id=xxx",
+                                //"url", "http://mcloudoc.aichatter.net:6500/sign-in",
                                 "action_id", "go_to_login"
                         )
                 )),
@@ -218,5 +220,69 @@ public class SlackWebClient {
         return false;
     }
 
+    // 로그인 링크가 포함된 홈탭 업데이트
+    public void updateHomeViewWithLoginLink(String userId, String loginUrl) {
+        log.info("로그인 링크로 홈탭 업데이트 - 사용자: {}, URL: {}", userId, loginUrl);
 
+        Map<String, Object> view = Map.of(
+                "type", "home",
+                "blocks", getLoginLinkBlocks(loginUrl)
+        );
+
+        Map<String, Object> payload = Map.of(
+                "user_id", userId,
+                "view", view
+        );
+
+        slackClient.post()
+                .uri("/views.publish")
+                .header("Authorization", "Bearer " + botToken)
+                .bodyValue(payload)
+                .retrieve()
+                .bodyToMono(String.class)
+                .subscribe(
+                        resp -> {
+                            log.info("로그인 링크 홈탭 업데이트 성공: {}", resp);
+                        },
+                        err -> {
+                            log.error("로그인 링크 홈탭 업데이트 실패: {}", err.getMessage(), err);
+                        }
+                );
+    }
+
+    // 로그인 링크를 포함한 블록들
+    private List<Map<String, Object>> getLoginLinkBlocks(String loginUrl) {
+        return List.of(
+                Map.of("type", "section", "text", Map.of(
+                        "type", "mrkdwn",
+                        "text", "🔗 *aichatter 로그인 페이지*"
+                )),
+
+                Map.of("type", "section", "text", Map.of(
+                        "type", "mrkdwn",
+                        "text", "아래 링크를 클릭하여 aichatter 계정으로 로그인해주세요:"
+                )),
+
+                Map.of("type", "section", "text", Map.of(
+                        "type", "mrkdwn",
+                        "text", "👉 <" + loginUrl + "|aichatter 로그인하기>"
+                )),
+
+                Map.of("type", "divider"),
+
+                Map.of("type", "context", "elements", List.of(
+                        Map.of("type", "mrkdwn", "text", "_로그인 완료 후 이 페이지가 자동으로 업데이트됩니다._")
+                )),
+
+                // 다시 시도 버튼
+                Map.of("type", "actions", "elements", List.of(
+                        Map.of(
+                                "type", "button",
+                                "text", Map.of("type", "plain_text", "text", "🔄 새로고침"),
+                                "action_id", "refresh_home_tab",
+                                "style", "primary"
+                        )
+                ))
+        );
+    }
 }

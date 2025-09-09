@@ -1,7 +1,9 @@
 package com.zuzihe.slackbot.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zuzihe.slackbot.dto.SlackOAuthResponse;
 import com.zuzihe.slackbot.service.SlackService;
 import lombok.RequiredArgsConstructor;
@@ -77,13 +79,13 @@ public class SlackController {
         return ResponseEntity.ok("OK");
     }
 
-    // 기존 SlackController 내부에 추가
+    //
     @GetMapping("/oauth/callback")
     public ResponseEntity<String> handleSlackOAuthCallback(
             @RequestParam String code,
             @RequestParam(required = false) String state
     ) throws JsonProcessingException {
-        log.info("✅ Slack callback 도착! code = {}, state = {}", code, state);
+        log.info("Slack callback 도착! code = {}, state = {}", code, state);
 
         WebClient webClient = WebClient.create();
         String rawJson = webClient.post()
@@ -92,7 +94,7 @@ public class SlackController {
                 .bodyValue("code=" + code +
                         "&client_id=" + slackClientId +
                         "&client_secret=" + slackClientSecret +
-                        "&redirect_uri=https://039e0385f8f9.ngrok-free.app/slack/oauth/callback")
+                        "&redirect_uri=https://949ac40aa5c9.ngrok-free.app/slack/oauth/callback")
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
@@ -106,7 +108,7 @@ public class SlackController {
         log.info("🔍 SlackOAuthResponse 매핑 결과: {}", response);
 
         if (!response.isOk()) {
-            return ResponseEntity.status(500).body("❌ Slack OAuth 실패: " + response.getError());
+            return ResponseEntity.status(500).body("Slack OAuth 실패: " + response.getError());
         }
 
         slackService.saveInstalledWorkspace(response);
@@ -114,5 +116,51 @@ public class SlackController {
         return ResponseEntity.ok("Slack 앱 설치 완료!");
     }
 
+    @PostMapping(value = "/interactive", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public ResponseEntity<String> handleInteractive(@RequestParam("payload") String payload) throws JsonProcessingException {
+        log.info("nteractive payload 수신: {}", payload);
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(payload);
+
+        // 디버깅을 위한 전체 payload 로깅
+        log.info("파싱된 payload: {}", root.toPrettyString());
+
+        String actionId = root.at("/actions/0/action_id").asText();
+        String slackUserId = root.at("/user/id").asText();
+
+        log.info("Action ID: {}, User ID: {}", actionId, slackUserId);
+
+        if ("go_to_login".equals(actionId)) {
+            log.info("로그인 버튼 클릭 처리 시작");
+
+            // 로그인 URL 구성
+            String loginUrl = String.format(
+                    "http://mcloudoc.aichatter.net:6500/sign-in?slack_user_id=%s", slackUserId
+            );
+
+            log.info("생성된 로그인 URL: {}", loginUrl);
+
+            // 홈탭을 업데이트하는 방식으로 변경
+            try {
+                slackService.updateHomeViewWithLoginLink(slackUserId, loginUrl);
+                log.info("홈탭 업데이트 완료");
+                return ResponseEntity.ok(""); // 빈 응답
+            } catch (Exception e) {
+                log.error("홈탭 업데이트 실패", e);
+
+                // 에러 메시지를 ephemeral로 응답
+                ObjectNode response = mapper.createObjectNode();
+                response.put("response_type", "ephemeral");
+                response.put("text", "로그인 링크 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
+
+                return ResponseEntity.ok(response.toString());
+            }
+        }
+
+        // 다른 버튼 액션들 처리
+        log.info("처리되지 않은 action_id: {}", actionId);
+        return ResponseEntity.ok("{}");
+    }
 
 }
