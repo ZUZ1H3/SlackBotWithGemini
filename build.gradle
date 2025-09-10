@@ -32,8 +32,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'io.projectreactor:reactor-core:3.6.3'
-    implementation 'com.slack.api:slack-api-client:1.40.0'
-    implementation 'com.slack.api:slack-app-backend:1.40.0'
     compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.mysql:mysql-connector-j'

@@ -91,14 +91,6 @@ public class SlackController {
                     slackService.handleDirectMessage(channel, text, userId, threadTs != null ? threadTs : ts);
                 }
 
-            } else if ("assistant_thread_started".equals(eventType)) {
-                // AI 앱 컨테이너 첫 실행시
-                String channelId = (String) event.get("channel");
-                String userId = (String) event.get("user");
-                String threadTs = (String) event.get("thread_ts");
-
-                // 환영 메시지 및 초기 프롬프트 제공
-                slackService.handleThreadStart(channelId, userId, threadTs);
             }
         }
         return ResponseEntity.ok("OK");
