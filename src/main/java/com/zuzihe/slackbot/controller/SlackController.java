@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.zuzihe.slackbot.dto.SlackOAuthResponse;
 import com.zuzihe.slackbot.service.SlackService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.reactive.function.client.WebClient;
 import java.util.Map;
 
 @Slf4j
@@ -74,12 +72,37 @@ public class SlackController {
 
                 // 홈 탭 뷰 표시 (Slack Web API - views.publish)
                 slackService.publishHomeView(userId);
+            } else if ("message".equals(eventType)) {
+                // DM 메시지 처리
+                String channelType = (String) event.get("channel_type");
+                String text = (String) event.get("text");
+                String userId = (String) event.get("user");
+
+                // DM(im)인지 확인 + 봇 자신의 메시지가 아닌지 확인
+                if  ("im".equals(channelType) &&
+                        event.get("bot_id") == null &&      // 봇 메시지가 아님
+                        text != null &&                     // 텍스트가 있음
+                        !text.trim().isEmpty() &&           // 빈 메시지가 아님
+                        userId != null) {
+                    String channel = (String) event.get("channel");
+                    String threadTs = (String) event.get("thread_ts");
+                    String ts = (String) event.get("ts");
+                    // AI 앱 스레드 응답 (thread_ts 사용)
+                    slackService.handleDirectMessage(channel, text, userId, threadTs != null ? threadTs : ts);
+                }
+
+            } else if ("assistant_thread_started".equals(eventType)) {
+                // AI 앱 컨테이너 첫 실행시
+                String channelId = (String) event.get("channel");
+                String userId = (String) event.get("user");
+                String threadTs = (String) event.get("thread_ts");
+
+                // 환영 메시지 및 초기 프롬프트 제공
+                slackService.handleThreadStart(channelId, userId, threadTs);
             }
         }
         return ResponseEntity.ok("OK");
     }
-
-
 
     @PostMapping(value = "/interactive", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<String> handleInteractive(@RequestParam("payload") String payload) throws JsonProcessingException {

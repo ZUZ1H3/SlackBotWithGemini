@@ -35,7 +35,24 @@ public class SlackWebClient {
                     System.err.println("Slack 메시지 전송 실패: " + error.getMessage());
                 });
     }
+    public void sendMessageWithThread(String channelId, String message, String threadTs) {
+        Map<String, Object> requestBody = Map.of(
+                "channel", channelId,
+                "text", message,
+                "thread_ts", threadTs  // 스레드 타임스탬프 추가
+        );
 
+        slackClient.post()
+                .uri("https://slack.com/api/chat.postMessage")
+                .header("Authorization", "Bearer " + botToken)
+                .header("Content-Type", "application/json")
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .subscribe(response -> {
+                    log.info("스레드 메시지 전송 완료: {}", response);
+                });
+    }
     public void publishAppHome(String userId) {
         boolean isLinked = isAichatterLinked(userId); // 로그인 여부 판단
 
