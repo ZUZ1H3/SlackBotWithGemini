@@ -61,7 +61,7 @@ public class SlackWebClient {
 
         Map<String, Object> view = Map.of(
                 "type", "home",
-                "blocks", isLinked ? getlinkedBlocks() : getUnlinkedBlocks()
+                "blocks", isLinked ? getlinkedBlocks() : getUnlinkedBlocks(userId)
         );
 
         Map<String, Object> payload = Map.of(
@@ -95,7 +95,8 @@ public class SlackWebClient {
     }
 
     // 로그인 안 된 사용자용 홈 탭
-    private List<Map<String, Object>> getUnlinkedBlocks() {
+    private List<Map<String, Object>> getUnlinkedBlocks(String userId) {
+        String loginUrl = "http://mcloudoc.aichatter.net:6500/sign-in?slack_user_id=" + userId;
         return List.of(
                 section("* aichatter를 슬랙에서 사용하려면 먼저 계정을 연동해주세요.*"),
                 section("""
@@ -108,42 +109,11 @@ public class SlackWebClient {
                         """),
                 divider(),
                 Map.of("type", "actions", "elements", List.of(
-                        button("🔗 aichatter 로그인하기", "go_to_login")
+                        urlButton("🔗 aichatter 로그인하기", loginUrl)
                 ))
         );
     }
 
-
-    // 로그인 링크 업데이트
-    public void updateHomeViewWithLoginLink(String userId, String loginUrl) {
-        log.info("로그인 링크로 홈탭 업데이트 - 사용자: {}, URL: {}", userId, loginUrl);
-
-        Map<String, Object> view = Map.of(
-                "type", "home",
-                "blocks", List.of(
-                        section("👉 <" + loginUrl + "|aichatter 로그인하기>"),
-                        Map.of("type", "actions", "elements", List.of(
-                                button("🔄 새로고침", "refresh_home_tab")
-                        ))
-                )
-        );
-
-        Map<String, Object> payload = Map.of(
-                "user_id", userId,
-                "view", view
-        );
-
-        slackClient.post()
-                .uri("/views.publish")
-                .header("Authorization", "Bearer " + botToken)
-                .bodyValue(payload)
-                .retrieve()
-                .bodyToMono(String.class)
-                .subscribe(
-                        resp -> log.info("로그인 링크 홈탭 업데이트 성공: {}", resp),
-                        err -> log.error("로그인 링크 홈탭 업데이트 실패: {}", err.getMessage(), err)
-                );
-    }
 
     private boolean isAichatterLinked(String slackUserId) {
         // TODO: DB 조회 실제 로직으로 대체
@@ -177,6 +147,15 @@ public class SlackWebClient {
                 "type", "section",
                 "text", Map.of("type", "mrkdwn", "text", markdownText),
                 "accessory", button
+        );
+    }
+
+    public static Map<String, Object> urlButton(String text, String url) {
+        return Map.of(
+                "type", "button",
+                "text", Map.of("type", "plain_text", "text", text),
+                "url", url,
+                "style", "primary"
         );
     }
 

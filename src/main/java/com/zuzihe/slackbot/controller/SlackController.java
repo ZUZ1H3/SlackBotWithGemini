@@ -96,6 +96,7 @@ public class SlackController {
         return ResponseEntity.ok("OK");
     }
 
+    //유저가 클릭할 수 있는 요소들....
     @PostMapping(value = "/interactive", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<String> handleInteractive(@RequestParam("payload") String payload) throws JsonProcessingException {
         log.info("nteractive payload 수신: {}", payload);
@@ -111,35 +112,6 @@ public class SlackController {
 
         log.info("Action ID: {}, User ID: {}", actionId, slackUserId);
 
-        if ("go_to_login".equals(actionId)) {
-            log.info("로그인 버튼 클릭 처리 시작");
-
-            // 로그인 URL 구성
-            String loginUrl = String.format(
-                    "http://mcloudoc.aichatter.net:6500/sign-in?slack_user_id=%s", slackUserId
-            );
-
-            log.info("생성된 로그인 URL: {}", loginUrl);
-
-            // 홈탭을 업데이트하는 방식으로 변경
-            try {
-                slackService.updateHomeViewWithLoginLink(slackUserId, loginUrl);
-                log.info("홈탭 업데이트 완료");
-                return ResponseEntity.ok(""); // 빈 응답
-            } catch (Exception e) {
-                log.error("홈탭 업데이트 실패", e);
-
-                // 에러 메시지를 ephemeral로 응답
-                ObjectNode response = mapper.createObjectNode();
-                response.put("response_type", "ephemeral");
-                response.put("text", "로그인 링크 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
-
-                return ResponseEntity.ok(response.toString());
-            }
-        }
-
-        // 다른 버튼 액션들 처리
-        log.info("처리되지 않은 action_id: {}", actionId);
         return ResponseEntity.ok("{}");
     }
 

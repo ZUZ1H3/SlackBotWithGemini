@@ -39,9 +39,7 @@ public class SlackService {
         // 예: workspace 테이블에 insert or update
     }
 
-    public void updateHomeViewWithLoginLink(String userId, String loginUrl) {
-        slackWebClient.updateHomeViewWithLoginLink(userId, loginUrl);
-    }
+
 
     // AI 앱 DM 메시지 처리
     @Async
