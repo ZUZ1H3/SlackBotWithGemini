@@ -93,14 +93,14 @@ public class SlackWebClient {
     // 로그인된 사용자용 홈 탭
     private List<Map<String, Object>> getlinkedBlocks() {
         return List.of(
-                section("👋 *안녕하세요, aichatter입니다.*"),
+                section("👋 *안녕하세요, aichatter입니다.*\n"),
                 divider(),
                 section("*나의 문서봇*"),
                 divider(),
-                sectionWithButton("*apispec-bot · aichatter*\n최근 대화한 날짜 · *1일 전*",
-                        button("열기", "open_docbot_apispec")),
-                sectionWithButton("*영업지원 문서봇*\n최근 대화한 날짜 · *2025-07-31 09:15*",
-                        button("열기", "open_docbot_sales"))
+                sectionWithButton("*아이채터 정보봇*\n최근 대화한 날짜 · *1일 전*",
+                        button("채팅", "open_docbot_apispec")),
+                sectionWithButton("*영업지원 문서봇*\n최근 대화한 날짜 · *2025-08-31 09:15*",
+                        button("채팅", "open_docbot_sales"))
         );
     }
 
@@ -109,14 +109,7 @@ public class SlackWebClient {
         String loginUrl = "http://mcloudoc.aichatter.net:6500/sign-in?slack_user_id=" + userId;
         return List.of(
                 section("* aichatter를 슬랙에서 사용하려면 먼저 계정을 연동해주세요.*"),
-                section("""
-                        aichatter를 연동하면 다음 기능을 사용할 수 있어요.
 
-                        • `/aichatter` 명령어로 바로 질문
-                        • 문서봇 선택 후 대화형 질의
-                        • 질문 기록 자동 저장
-                        • 사내 데이터 기반 답변
-                        """),
                 divider(),
                 Map.of("type", "actions", "elements", List.of(
                         urlButton("🔗 aichatter 로그인하기", loginUrl)
@@ -163,7 +156,7 @@ public class SlackWebClient {
 
     private boolean isAichatterLinked(String slackUserId) {
         // TODO: DB 조회 실제 로직으로 대체
-        return false;
+        return true;
     }
 
     ///**************************헬퍼메서드
