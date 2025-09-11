@@ -3,14 +3,14 @@ package com.zuzihe.slackbot.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zuzihe.slackbot.service.SlackService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -18,11 +18,6 @@ import java.util.Map;
 @RequestMapping("/slack")
 @RequiredArgsConstructor
 public class SlackController {
-    @Value("${slack.client-id}")
-    private String slackClientId;
-
-    @Value("${slack.client-secret}")
-    private String slackClientSecret;
 
     private final SlackService slackService;
 
@@ -91,6 +86,14 @@ public class SlackController {
                     slackService.handleDirectMessage(channel, text, userId, threadTs != null ? threadTs : ts);
                 }
 
+            }else if ("assistant_thread_started".equals(eventType)){
+                Map<String, Object> assistantThread = (Map<String, Object>) event.get("assistant_thread");
+                String userId = (String) assistantThread.get("user_id");
+                String channelId = (String) assistantThread.get("channel_id");
+                String threadTs = (String) assistantThread.get("thread_ts");
+
+                // 새 어시스턴트 스레드가 시작되면 환영 메시지 발송
+                slackService.sendWelcomeMessage(channelId, threadTs);
             }
         }
         return ResponseEntity.ok("OK");
@@ -99,7 +102,7 @@ public class SlackController {
     //유저가 클릭할 수 있는 요소들....
     @PostMapping(value = "/interactive", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<String> handleInteractive(@RequestParam("payload") String payload) throws JsonProcessingException {
-        log.info("nteractive payload 수신: {}", payload);
+        log.info("Interactive payload 수신: {}", payload);
 
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(payload);
@@ -107,10 +110,30 @@ public class SlackController {
         // 디버깅을 위한 전체 payload 로깅
         log.info("파싱된 payload: {}", root.toPrettyString());
 
-        String actionId = root.at("/actions/0/action_id").asText();
-        String slackUserId = root.at("/user/id").asText();
+        String type = root.get("type").asText();
 
-        log.info("Action ID: {}, User ID: {}", actionId, slackUserId);
+        if ("block_actions".equals(type)) {
+            String actionId = root.at("/actions/0/action_id").asText();
+            String slackUserId = root.at("/user/id").asText();
+            String channelId = root.at("/channel/id").asText();
+
+            // thread_ts 가져오기 (환영 메시지의 스레드)
+            String threadTs = null;
+            if (root.has("message") && root.get("message").has("thread_ts")) {
+                threadTs = root.get("message").get("thread_ts").asText();
+            } else if (root.has("message") && root.get("message").has("ts")) {
+                threadTs = root.get("message").get("ts").asText();
+            }
+
+            log.info("Action ID: {}, User ID: {}, Channel: {}, Thread: {}",
+                    actionId, slackUserId, channelId, threadTs);
+
+            // 환영 메시지 버튼 클릭 처리
+            if (List.of("latest_trends", "b2b_social_media", "customer_feedback", "product_brainstorm")
+                    .contains(actionId)) {
+                slackService.handleButtonClick(channelId, actionId, threadTs);
+            }
+        }
 
         return ResponseEntity.ok("{}");
     }

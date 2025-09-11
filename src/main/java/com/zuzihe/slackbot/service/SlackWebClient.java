@@ -37,23 +37,33 @@ public class SlackWebClient {
 
     // 스레드 메시지 전송
     public void sendMessageWithThread(String channelId, String message, String threadTs) {
+        Map<String, Object> block = Map.of(
+                "type", "section",
+                "text", Map.of(
+                        "type", "mrkdwn",
+                        "text", message   // 여기서 Slack이 지원하는 서식만 적용됨
+                )
+        );
+
         Map<String, Object> requestBody = Map.of(
                 "channel", channelId,
-                "text", message,
-                "thread_ts", threadTs
+                "thread_ts", threadTs,
+                "blocks", List.of(block)
         );
+
         slackClient.post()
-                .uri("https://slack.com/api/chat.postMessage")
+                .uri("/chat.postMessage")
                 .header("Authorization", "Bearer " + botToken)
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(Map.class)
                 .subscribe(
-                response -> log.info("스레드 메시지 전송 완료: {}", response),
-                error -> log.error("스레드 메시지 전송 실패", error)
-        );
+                        response -> log.info("스레드 메시지 전송 완료: {}", response),
+                        error -> log.error("스레드 메시지 전송 실패", error)
+                );
     }
+
 
     // 홈 탭 업데이트
     public void publishAppHome(String userId) {
@@ -113,7 +123,43 @@ public class SlackWebClient {
                 ))
         );
     }
+    public void sendWelcomeMessageWithButtons(String channelId, String threadTs) {
+        List<Map<String, Object>> blocks = List.of(
+                section("안녕하세요! \n저는 aichatter입니다."),
+                section("\n일반 채팅을 원하시면 바로 채팅을 보내주세요. \n 아래는 예시 프롬프트입니다."),
 
+                Map.of("type", "actions", "elements", List.of(
+                        button("aichatter에 대해 알려주세요!!!", "latest_trends"),
+                        button("문서봇을 만드는 방법이 무엇인강요?", "b2b_social_media")
+                )),
+
+                section("문서봇 이용하고싶ㅇ므면 아래에서 문서봇을 선택하세요."),
+
+                Map.of("type", "actions", "elements", List.of(
+                        button("지혜의 문서봇", "customer_feedback"),
+                        button("아이채터 정보봇ㅎ", "product_brainstorm")
+                ))
+        );
+
+        Map<String, Object> requestBody = Map.of(
+                "channel", channelId,
+                "thread_ts", threadTs,
+                "text", "환영 메시지",
+                "blocks", blocks
+        );
+
+        slackClient.post()
+                .uri("/chat.postMessage")
+                .header("Authorization", "Bearer " + botToken)
+                .header("Content-Type", "application/json")
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .subscribe(
+                        response -> log.info("환영 메시지 전송 완료: {}", response),
+                        error -> log.error("환영 메시지 전송 실패", error)
+                );
+    }
 
     private boolean isAichatterLinked(String slackUserId) {
         // TODO: DB 조회 실제 로직으로 대체

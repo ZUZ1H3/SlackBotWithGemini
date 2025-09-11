@@ -33,7 +33,7 @@ public class SlackInstallController {
     @Value("${slack.client-secret}")
     private String slackClientSecret;
 
-    @Value("${redirect.uri}")
+    @Value("${slack.redirect-uri}")
     private String redirectUri;
 
     private final SlackService slackService;
