@@ -106,7 +106,7 @@ public class SlackWebClient {
 
     // 로그인 안 된 사용자용 홈 탭
     private List<Map<String, Object>> getUnlinkedBlocks(String userId) {
-        String loginUrl = "http://mcloudoc.aichatter.net:6500/sign-in?slack_user_id=" + userId;
+        String loginUrl = "http://localhost:8081/slack/sign-in?slack_user_id=" + userId + "&team_id=" + "d1234";
         return List.of(
                 section("* aichatter를 슬랙에서 사용하려면 먼저 계정을 연동해주세요.*"),
 
@@ -156,7 +156,7 @@ public class SlackWebClient {
 
     private boolean isAichatterLinked(String slackUserId) {
         // TODO: DB 조회 실제 로직으로 대체
-        return true;
+        return false;
     }
 
     ///**************************헬퍼메서드

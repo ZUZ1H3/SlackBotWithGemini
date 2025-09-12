@@ -3,13 +3,16 @@ package com.zuzihe.slackbot.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zuzihe.slackbot.service.JwtService;
 import com.zuzihe.slackbot.service.SlackService;
+import com.zuzihe.slackbot.service.SlackUserMappingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +23,43 @@ import java.util.Map;
 public class SlackController {
 
     private final SlackService slackService;
+    private final SlackUserMappingService mappingService;
+    private final JwtService  jwtService;
+    @GetMapping("/sign-in")
+    public ResponseEntity<Void> startSignIn(
+            @RequestParam String slack_user_id,
+            @RequestParam String team_id
+    ) {
+        // JWT 발급 (slack_user_id, team_id 담음)
+        String token = jwtService.issue(slack_user_id, team_id);
+
+        // 8080 로그인 페이지로 Redirect
+        URI redirect = URI.create("http://localhost:8080/api/login?token=" + token);
+        return ResponseEntity.status(302).location(redirect).build();
+    }
+    // 매핑 조회 확인용
+    @GetMapping("/sign-in/check")
+    public ResponseEntity<String> checkMapping(
+            @RequestParam String slack_user_id,
+            @RequestParam(defaultValue = "team123") String team_id
+    ) {
+        String user = mappingService.findAichatterUser(team_id, slack_user_id);
+        return ResponseEntity.ok("매핑 조회 결과: " + user);
+    }
+    @PostMapping("/sign-in/complete")
+    public ResponseEntity<String> completeSignIn(
+            @RequestParam String token,
+            @RequestParam String aichatterUserId
+    ) {
+        Map<String, Object> claims = jwtService.verify(token);
+
+        String slackUserId = (String) claims.get("slack_user_id");
+        String teamId = (String) claims.get("team_id");
+
+        mappingService.saveMapping(teamId, slackUserId, aichatterUserId);
+
+        return ResponseEntity.ok("연동 성공: " + slackUserId + " → " + aichatterUserId);
+    }
 
     // 슬래시 커맨드 /aichatter
     @PostMapping(value = "/commands", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
