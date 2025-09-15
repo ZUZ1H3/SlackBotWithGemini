@@ -63,7 +63,6 @@ public class SlackWebClient {
         String loginUrl = "http://localhost:8081/slack/sign-in?slack_user_id=" + userId + "&team_id=" + "d1234";
         return List.of(
                 section("* aichatter를 슬랙에서 사용하려면 먼저 계정을 연동해주세요.*"),
-
                 divider(),
                 Map.of("type", "actions", "elements", List.of(
                         urlButton("🔗 aichatter 로그인하기", loginUrl)
@@ -74,7 +73,7 @@ public class SlackWebClient {
     public void sendWelcomeMessageWithButtons(String channelId, String threadTs) {
         List<Map<String, Object>> blocks = List.of(
                 section("안녕하세요! \n저는 aichatter입니다."),
-                section("\n일반 채팅을 원하시면 바로 채팅을 보내주세요. \n 아래는 예시 프롬프트입니다."),
+                section("\n아래는 예시 프롬프트입니다."),
 
                 Map.of("type", "actions", "elements", List.of(
                         button("aichatter에 대해 알려주세요!!!", "latest_trends"),
@@ -98,6 +97,18 @@ public class SlackWebClient {
 
         postToSlack("/chat.postMessage", payload, "환영 메시지 전송 성공", "환영 메시지 전송 실패");
     }
+
+    // 스레드 제목 설정
+    public void setThreadTitle(String channelId, String threadTs, String title) {
+        Map<String, Object> payload = Map.of(
+                "channel_id", channelId,
+                "thread_ts", threadTs,
+                "title", title
+        );
+
+        postToSlack("/assistant.threads.setTitle", payload,"스레드 제목 설정 성공", "스레드 제목 설정 실패");
+    }
+
 
     private boolean isAichatterLinked(String slackUserId) {
         // TODO: DB 조회 실제 로직으로 대체

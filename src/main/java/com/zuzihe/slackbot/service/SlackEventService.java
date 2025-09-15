@@ -47,6 +47,7 @@ public class SlackEventService {
         String channelId = (String) assistantThread.get("channel_id");
         String threadTs = (String) assistantThread.get("thread_ts");
         slackWebClient.sendWelcomeMessageWithButtons(channelId, threadTs);
+        slackWebClient.setThreadTitle(channelId, threadTs, "기본 제목입니다.");
     }
 
     private void handleAppMention(Map<String, Object> event) {
@@ -98,7 +99,6 @@ public class SlackEventService {
             slackWebClient.sendMessageWithThread(channel, "처리 중 오류가 발생했습니다.", threadTs);
         }
     }
-
 
     private String convertMarkdownToMrkdwn(String text) {
         return text
