@@ -2,16 +2,12 @@ package com.zuzihe.slackbot.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class SlackUserMappingService {
-
-
-
     private final Map<String, String> store = new HashMap<>();
 
     // 매핑 저장

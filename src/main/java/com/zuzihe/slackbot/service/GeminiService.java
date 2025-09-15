@@ -40,7 +40,7 @@ public class GeminiService {
                 .map(this::extractTextFromResponse);
     }
 
-    //Gemini 응답에서 text만 추출
+    //Gemini 응답에서 text만 추출 (지운이 코드에서 훔쳐운거)
     private String extractTextFromResponse(Map<String, Object> response) {
         var candidates = (List<Map<String, Object>>) response.get("candidates");
         if (candidates == null || candidates.isEmpty()) {

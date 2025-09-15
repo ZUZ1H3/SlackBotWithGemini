@@ -1,7 +1,6 @@
 package com.zuzihe.slackbot.service;
 
 import org.springframework.stereotype.Service;
-
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Map;

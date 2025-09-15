@@ -1,21 +1,16 @@
-package com.zuzihe.slackbot.controller;
+package com.zuzihe.slackbot.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zuzihe.slackbot.dto.SlackOAuthResponse;
-import com.zuzihe.slackbot.service.SlackService;
-import com.zuzihe.slackbot.service.StateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.net.URI;
@@ -23,10 +18,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @Slf4j
-@RestController
-@RequestMapping("/slack")
+@Service
 @RequiredArgsConstructor
-public class SlackInstallController {
+public class SlackOAuthService {
+
     @Value("${slack.client-id}")
     private String slackClientId;
 
@@ -36,31 +31,21 @@ public class SlackInstallController {
     @Value("${slack.redirect-uri}")
     private String redirectUri;
 
-    private final SlackService slackService;
-    private final StateService stateService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final WebClient webClient;
 
-    @GetMapping("/oauth/install")
-    public ResponseEntity<Void> start() {
-        String state = stateService.issue();
+    public ResponseEntity<Void> getInstallRedirect(String state) {
         String url = "https://slack.com/oauth/v2/authorize"
                 + "?client_id=" + slackClientId
                 + "&scope=commands,chat:write"
                 + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
                 + "&state=" + state;
 
-        URI auth = URI.create(url);
-
-        return ResponseEntity.status(302).location(auth).build();
+        return ResponseEntity.status(302).location(URI.create(url)).build();
     }
 
-    @GetMapping("/oauth/callback")
-    public ResponseEntity<String> handleSlackOAuthCallback(
-            @RequestParam String code,
-            @RequestParam(required = false) String state
-    ) throws JsonProcessingException {
+    public ResponseEntity<String> handleCallback(String code, String state) throws JsonProcessingException {
         log.info("Slack callback 도착! code = {}, state = {}", code, state);
-
-        WebClient webClient = WebClient.create();
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("code", code);
@@ -78,18 +63,26 @@ public class SlackInstallController {
 
         log.info("Slack OAuth 응답 원문:\n{}", rawJson);
 
-        // JSON 문자열 → DTO로 파싱
-        ObjectMapper objectMapper = new ObjectMapper();
         SlackOAuthResponse response = objectMapper.readValue(rawJson, SlackOAuthResponse.class);
-
-        log.info("SlackOAuthResponse 매핑 결과: {}", response);
 
         if (!response.isOk()) {
             return ResponseEntity.status(500).body("Slack OAuth 실패: " + response.getError());
         }
 
-        slackService.saveInstalledWorkspace(response);
-
+        saveInstalledWorkspace(response);
         return ResponseEntity.ok("Slack 앱 설치 완료!");
+    }
+
+    public void saveInstalledWorkspace(SlackOAuthResponse response) {
+        if (response.getTeam() == null) {
+            log.error("team 정보가 Slack 응답에 없습니다.");
+            throw new IllegalStateException("Slack 응답에 team 정보 없음");
+        }
+
+        String teamId = response.getTeam().getId();
+        String botToken = response.getAccess_token();
+
+        // team_id와 bot_token 등을 DB에 저장
+        // 예: workspace 테이블에 insert or update
     }
 }
