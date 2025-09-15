@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
 import java.util.Map;
+import static com.zuzihe.slackbot.util.SlackBlockBuilder.*;
 
 @Slf4j
 @Component
@@ -18,80 +19,33 @@ public class SlackWebClient {
 
     // 일반 메시지 전송
     public void sendMessage(String channel, String text) {
-        Map<String, Object> payload = Map.of(
-                "channel", channel,
-                "text", text
-        );
-        slackClient.post()
-                .uri("/chat.postMessage")
-                .header("Authorization", "Bearer " + botToken)
-                .header("Content-Type", "application/json")
-                .bodyValue(payload)
-                .retrieve()
-                .bodyToMono(String.class)
-                .subscribe(
-                        resp -> log.info("Slack 메시지 전송 완료: {}", resp),
-                        error -> log.error("Slack 메시지 전송 실패: {}", error.getMessage(), error)
-                );
+        Map<String, Object> payload = Map.of("channel", channel, "text", text);
+        postToSlack("/chat.postMessage", payload, "메시지 전송 성공", "메시지 전송 실패");
     }
 
     // 스레드 메시지 전송
     public void sendMessageWithThread(String channelId, String message, String threadTs) {
-        Map<String, Object> block = Map.of(
-                "type", "section",
-                "text", Map.of(
-                        "type", "mrkdwn",
-                        "text", message   // 여기서 Slack이 지원하는 서식만 적용됨
-                )
-        );
-
-        Map<String, Object> requestBody = Map.of(
+        Map<String, Object> block = section(message);
+        Map<String, Object> payload = Map.of(
                 "channel", channelId,
                 "thread_ts", threadTs,
                 "blocks", List.of(block)
         );
-
-        slackClient.post()
-                .uri("/chat.postMessage")
-                .header("Authorization", "Bearer " + botToken)
-                .header("Content-Type", "application/json")
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .subscribe(
-                        response -> log.info("스레드 메시지 전송 완료: {}", response),
-                        error -> log.error("스레드 메시지 전송 실패", error)
-                );
+        postToSlack("/chat.postMessage", payload, "스레드 메시지 전송 성공", "스레드 메시지 전송 실패");
     }
-
 
     // 홈 탭 업데이트
     public void publishAppHome(String userId) {
-        boolean isLinked = isAichatterLinked(userId); // 로그인 여부 판단
-
         Map<String, Object> view = Map.of(
                 "type", "home",
-                "blocks", isLinked ? getlinkedBlocks() : getUnlinkedBlocks(userId)
+                "blocks", isAichatterLinked(userId) ? getLinkedBlocks() : getUnlinkedBlocks(userId)
         );
-
-        Map<String, Object> payload = Map.of(
-                "user_id", userId,
-                "view", view
-        );
-
-        slackClient.post()
-                .uri("/views.publish")
-                .header("Authorization", "Bearer " + botToken)
-                .bodyValue(payload)
-                .retrieve()
-                .bodyToMono(String.class)
-                .subscribe(
-                        resp -> log.info("홈 탭 전송 성공: {}", resp),
-                        err -> log.error("홈 탭 전송 실패: {}", err.getMessage(), err)
-                );
+        Map<String, Object> payload = Map.of("user_id", userId, "view", view);
+        postToSlack("/views.publish", payload, "홈탭 전송 성공", "홈탭 전송 실패");
     }
+
     // 로그인된 사용자용 홈 탭
-    private List<Map<String, Object>> getlinkedBlocks() {
+    private List<Map<String, Object>> getLinkedBlocks() {
         return List.of(
                 section("👋 *안녕하세요, aichatter입니다.*\n"),
                 divider(),
@@ -116,6 +70,7 @@ public class SlackWebClient {
                 ))
         );
     }
+
     public void sendWelcomeMessageWithButtons(String channelId, String threadTs) {
         List<Map<String, Object>> blocks = List.of(
                 section("안녕하세요! \n저는 aichatter입니다."),
@@ -134,24 +89,14 @@ public class SlackWebClient {
                 ))
         );
 
-        Map<String, Object> requestBody = Map.of(
+        Map<String, Object> payload = Map.of(
                 "channel", channelId,
                 "thread_ts", threadTs,
                 "text", "환영 메시지",
                 "blocks", blocks
         );
 
-        slackClient.post()
-                .uri("/chat.postMessage")
-                .header("Authorization", "Bearer " + botToken)
-                .header("Content-Type", "application/json")
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .subscribe(
-                        response -> log.info("환영 메시지 전송 완료: {}", response),
-                        error -> log.error("환영 메시지 전송 실패", error)
-                );
+        postToSlack("/chat.postMessage", payload, "환영 메시지 전송 성공", "환영 메시지 전송 실패");
     }
 
     private boolean isAichatterLinked(String slackUserId) {
@@ -159,43 +104,17 @@ public class SlackWebClient {
         return false;
     }
 
-    ///**************************헬퍼메서드
-    public static Map<String, Object> section(String markdownText) {
-        return Map.of(
-                "type", "section",
-                "text", Map.of("type", "mrkdwn", "text", markdownText)
-        );
+    private void postToSlack(String uri, Object payload, String successLog, String errorLog) {
+        slackClient.post()
+                .uri(uri)
+                .header("Authorization", "Bearer " + botToken)
+                .header("Content-Type", "application/json")
+                .bodyValue(payload)
+                .retrieve()
+                .bodyToMono(String.class)
+                .subscribe(
+                        resp -> log.info("{}: {}", successLog, resp),
+                        err -> log.error("{}: {}", errorLog, err.getMessage(), err)
+                );
     }
-
-    // 구분선(divider)
-    public static Map<String, Object> divider() {
-        return Map.of("type", "divider");
-    }
-
-    // 버튼
-    public static Map<String, Object> button(String text, String actionId) {
-        return Map.of(
-                "type", "button",
-                "text", Map.of("type", "plain_text", "text", text),
-                "action_id", actionId
-        );
-    }
-
-    public static Map<String, Object> sectionWithButton(String markdownText, Map<String, Object> button) {
-        return Map.of(
-                "type", "section",
-                "text", Map.of("type", "mrkdwn", "text", markdownText),
-                "accessory", button
-        );
-    }
-
-    public static Map<String, Object> urlButton(String text, String url) {
-        return Map.of(
-                "type", "button",
-                "text", Map.of("type", "plain_text", "text", text),
-                "url", url,
-                "style", "primary"
-        );
-    }
-
 }
