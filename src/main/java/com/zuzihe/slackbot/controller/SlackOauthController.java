@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/slack")
+@RequestMapping("/api/slack")
 @RequiredArgsConstructor
 public class SlackOauthController {
     private final StateService stateService;

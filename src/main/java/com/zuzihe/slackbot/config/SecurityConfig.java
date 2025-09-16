@@ -18,7 +18,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/slack/**", "/install.html", "/favicon.ico", "/error").permitAll()
+                        .requestMatchers("/api/slack/**", "/install.html", "/favicon.ico", "/error").permitAll()
                         .anyRequest().authenticated()
                 );
 

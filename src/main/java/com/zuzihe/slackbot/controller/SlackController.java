@@ -12,7 +12,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/slack")
+@RequestMapping("/api/slack")
 @RequiredArgsConstructor
 public class SlackController {
 
