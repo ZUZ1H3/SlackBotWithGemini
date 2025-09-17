@@ -1,6 +1,6 @@
 package com.zuzihe.slackbot.controller;
 
-import com.zuzihe.slackbot.service.SlackCommandService;
+//import com.zuzihe.slackbot.service.SlackCommandService;
 import com.zuzihe.slackbot.service.SlackEventService;
 import com.zuzihe.slackbot.service.SlackInteractiveService;
 import lombok.RequiredArgsConstructor;
@@ -16,15 +16,16 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SlackController {
 
-    private final SlackCommandService slackCommandService;
+    //private final SlackCommandService slackCommandService;
     private final SlackEventService slackEventService;
     private final SlackInteractiveService slackInteractiveService;
 
-    // Slack Slash Command 처리
+    /* Slack Slash Command 처리
     @PostMapping(value = "/commands", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<String> handleCommand(@RequestParam Map<String, String> params) {
         return slackCommandService.handleCommand(params);
     }
+    */
 
     // Slack Event API 처리
     @PostMapping("/events")

@@ -12,11 +12,17 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class SlackEventService {
-    ///  이벤트 타입 더 많아지면 Processor 클래스로 따로 나누는 것 고려
+    // Slack에서 들어오는 이벤트를 처리하는 메인 서비스
+    //  이벤트 타입 더 많아지면 Processor 클래스로 따로 나누는 것 고려
     private final SlackWebClient slackWebClient;
     private final GeminiService geminiService;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * Slack Event 엔드포인트 진입점
+     * - type이 url_verification: 최초 Slack Event Subscription 검증 단계
+     * - type이 event_callback: 실제 이벤트가 들어오는 경우
+     */
     public ResponseEntity<String> handleEvent(Map<String, Object> payload) {
         String type = (String) payload.get("type");
 
@@ -28,6 +34,7 @@ public class SlackEventService {
             Map<String, Object> event = (Map<String, Object>) payload.get("event");
             String eventType = (String) event.get("type");
 
+            // 이벤트 종류별 분기 처리
             switch (eventType) {
                 case "app_home_opened" -> handleAppHomeOpened(event); //홈 탭 열었을 때 (홈 UI 초기화, 안내 메시지 표시 등).
                 case "assistant_thread_started" -> handleAssistantThread(event); //새 채팅방 열었을 때
@@ -39,28 +46,33 @@ public class SlackEventService {
         return ResponseEntity.ok("OK");
     }
 
+    /** 홈 탭 열림 처리 */
     private void handleAppHomeOpened(Map<String, Object> event) {
         String userId = (String) event.get("user");
         slackWebClient.publishAppHome(userId);
     }
 
+    /** 새 어시스턴트 채팅방 열림 처리 */
     private void handleAssistantThread(Map<String, Object> event) {
         Map<String, Object> assistantThread = (Map<String, Object>) event.get("assistant_thread");
         String channelId = (String) assistantThread.get("channel_id");
         String threadTs = (String) assistantThread.get("thread_ts");
         slackWebClient.sendWelcomeMessageWithButtons(channelId, threadTs);
-        slackWebClient.setThreadTitle(channelId, threadTs, "기본 제목입니다.");
+        //slackWebClient.setThreadTitle(channelId, threadTs, "기본 제목입니다."); //채팅방 제목을 정하는 건데 일단 신경 안써두댐
     }
 
+    /** 채널 멘션 이벤트 처리 */
     private void handleAppMention(Map<String, Object> event) {
         String text = (String) event.get("text");
         String channel = (String) event.get("channel");
         String prompt = geminiService.buildPrompt(text);
 
+        // 멘션된 텍스트를 AI에 전달하고, 응답을 Slack에 전송
         geminiService.callGemini(prompt)
                 .subscribe(answer -> slackWebClient.sendMessage(channel, answer));
     }
 
+    /** 일반 메시지 이벤트 처리 (특히 DM) */
     private void handleMessage(Map<String, Object> event) {
         try {
             log.info("Slack Event Payload: {}", objectMapper.writeValueAsString(event));
@@ -84,6 +96,10 @@ public class SlackEventService {
         }
     }
 
+    /**
+     * DM 처리 (비동기)
+     * - 유저가 DM을 보내면 LLM 호출 → 응답을 같은 스레드에 전송
+     */
     @Async
     public void handleDirectMessage(String channel, String text, String userId, String threadTs) {
         try {
@@ -107,6 +123,7 @@ public class SlackEventService {
         }
     }
 
+    /** Markdown → Slack mrkdwn 변환 */
     private String convertMarkdownToMrkdwn(String text) {
         return text
                 .replaceAll("## ", "*")

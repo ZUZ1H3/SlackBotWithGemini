@@ -18,9 +18,14 @@ public class SlackInteractiveService {
     private final ObjectMapper objectMapper;
     private final SlackWebClient slackWebClient;
     private final GeminiService geminiService;
-    private final List<String> welcomeButtonActions = List.of(
-            "latest_trends", "b2b_social_media", "customer_feedback", "product_brainstorm"
+
+    private final List<String> welcomeButtonActions = List.of( // Slack Block Kit 버튼(action_id) 목록
+            "ask_about_aichatter",
+            "ask_how_to_build_docbot",
+            "select_docbot",
+            "select_infobot"
     );
+
 
     public ResponseEntity<String> handleInteractive(String payload) {
         try {
@@ -41,6 +46,11 @@ public class SlackInteractiveService {
         }
     }
 
+    /**
+     * block_actions 이벤트 처리
+     * - 어떤 버튼(action_id)이 눌렸는지 식별
+     * - 채널/스레드 정보 추출 후 버튼 클릭 핸들러 호출
+     */
     private void handleBlockActions(JsonNode root) {
         String actionId = root.at("/actions/0/action_id").asText();
         String channelId = root.at("/channel/id").asText();
@@ -53,6 +63,11 @@ public class SlackInteractiveService {
         }
     }
 
+    /**
+     * 메시지 객체에서 thread_ts 또는 ts 추출
+     * - thread_ts 있으면 스레드 답글
+     * - 없으면 일반 메시지
+     */
     private String getThreadTsFromMessage(JsonNode root) {
         JsonNode message = root.get("message");
         if (message != null) {
@@ -63,22 +78,30 @@ public class SlackInteractiveService {
         return null;
     }
 
+    /**
+     * 버튼 클릭 처리
+     * - select_docbot / select_infobot: 고정 메시지 반환
+     * - ask_about_aichatter / ask_how_to_build_docbot: Gemini AI 호출 후 응답 반환
+     * - lack 응답 타임아웃(3초) 문제를 피하기 위해 비동기 실행
+     */
     @Async
     public void handleButtonClick(String channelId, String actionId, String threadTs) {
         // 1. 문서봇 버튼 클릭일 경우 → 고정 메시지 반환
-        if ("customer_feedback".equals(actionId)) {
+        if ("select_docbot".equals(actionId)) {
             slackWebClient.sendMessageWithThread(channelId, "*'지혜의 문서봇'이 선택되었습니다.*", threadTs);
             return;
-        } else if ("product_brainstorm".equals(actionId)) {
+        } else if ("select_infobot".equals(actionId)) {
             slackWebClient.sendMessageWithThread(channelId, "*'아이채터 정보봇'이 선택되었습니다.*", threadTs);
             return;
         }
 
-        // 2. 프롬프트 버튼 → 기존처럼 AI 호출
+        // 2. 질문 버튼 → Gemini 호출
         String question = getQuestionByActionId(actionId);
         if (question != null) {
+            // 우선 질문 내용을 Slack에 표시
             slackWebClient.sendMessageWithThread(channelId, "📍질문 :" + question, threadTs);
 
+            // Gemini 프롬프트 생성 + 호출
             String prompt = geminiService.buildPrompt(question);
             geminiService.callGemini(prompt).subscribe(
                     answer -> {
@@ -94,14 +117,23 @@ public class SlackInteractiveService {
         }
     }
 
+    /**
+     * action_id → 질문 텍스트 매핑
+     * - 버튼 클릭 시 어떤 질문을 보낼지 결정
+     */
     private String getQuestionByActionId(String actionId) {
         return switch (actionId) {
-            case "latest_trends" -> "aichatter에 대해 알려주세요!!!";
-            case "b2b_social_media" -> "문서봇을 만드는 방법이 무엇인강요?";
+            case "ask_about_aichatter" -> "aichatter에 대해 알려주세요!!!";
+            case "ask_how_to_build_docbot" -> "문서봇을 만드는 방법이 무엇인강요?";
             default -> null;
         };
     }
 
+    /**
+     * Markdown → Slack mrkdwn 변환
+     * - LLM 답변은 보통 Markdown으로 오기 때문에 Slack에 맞춰 변환 필요
+     * - ## 헤더, **볼드**, 리스트(-, 숫자) 등을 mrkdwn 문법으로 치환
+     */
     private String convertMarkdownToMrkdwn(String text) {
         return text
                 .replaceAll("## ", "*")

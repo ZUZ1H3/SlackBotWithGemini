@@ -1,4 +1,5 @@
-package com.zuzihe.slackbot.service;
+/*
+ package com.zuzihe.slackbot.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,12 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+
+    이거는 아직 계획에 없지만 일단 만들어 본 거임
+    그래서 안 봐도 댐
+    /명령어 등록하는 건데
+    Command 관련된 건 나중에 시간나면 만드시길
+
 public class SlackCommandService {
 
     private final GeminiService geminiService;
@@ -33,3 +40,4 @@ public class SlackCommandService {
         });
     }
 }
+ */
