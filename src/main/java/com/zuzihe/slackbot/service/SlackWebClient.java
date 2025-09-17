@@ -112,7 +112,7 @@ public class SlackWebClient {
 
     private boolean isAichatterLinked(String slackUserId) {
         // TODO: DB 조회 실제 로직으로 대체
-        return false;
+        return true;
     }
 
     private void postToSlack(String uri, Object payload, String successLog, String errorLog) {
