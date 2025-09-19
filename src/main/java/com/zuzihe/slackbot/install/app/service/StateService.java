@@ -1,4 +1,4 @@
-package com.zuzihe.slackbot.service;
+package com.zuzihe.slackbot.install.app.service;
 
 import org.springframework.stereotype.Service;
 import java.security.SecureRandom;

@@ -1,4 +1,4 @@
-package com.zuzihe.slackbot.service;
+package com.zuzihe.slackbot.link.account.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

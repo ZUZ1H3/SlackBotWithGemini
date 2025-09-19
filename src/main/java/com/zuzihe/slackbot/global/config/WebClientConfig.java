@@ -1,4 +1,4 @@
-package com.zuzihe.slackbot.config;
+package com.zuzihe.slackbot.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

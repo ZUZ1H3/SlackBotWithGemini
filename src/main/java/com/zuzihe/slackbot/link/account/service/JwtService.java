@@ -1,4 +1,4 @@
-package com.zuzihe.slackbot.service;
+package com.zuzihe.slackbot.link.account.service;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

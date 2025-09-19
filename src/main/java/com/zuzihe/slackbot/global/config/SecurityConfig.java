@@ -1,4 +1,4 @@
-package com.zuzihe.slackbot.config;
+package com.zuzihe.slackbot.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +18,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/slack/**", "/install.html", "/favicon.ico", "/error").permitAll()
+                        .requestMatchers(
+                                "/**",
+                                "/install.html",
+                                "/favicon.ico",
+                                "/error"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 );
 

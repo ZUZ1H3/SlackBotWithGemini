@@ -1,8 +1,8 @@
-package com.zuzihe.slackbot.controller;
+package com.zuzihe.slackbot.message.web.controller;
 
 //import com.zuzihe.slackbot.service.SlackCommandService;
-import com.zuzihe.slackbot.service.SlackEventService;
-import com.zuzihe.slackbot.service.SlackInteractiveService;
+import com.zuzihe.slackbot.message.service.SlackEventService;
+import com.zuzihe.slackbot.interacivity.SlackInteractiveService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -10,13 +10,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/slack")
+@Slf4j
 @RequiredArgsConstructor
 public class SlackController {
 
-    //private final SlackCommandService slackCommandService;
     private final SlackEventService slackEventService;
     private final SlackInteractiveService slackInteractiveService;
 
@@ -30,6 +29,7 @@ public class SlackController {
     // Slack Event API 처리
     @PostMapping("/events")
     public ResponseEntity<String> handleEvent(@RequestBody Map<String, Object> payload) {
+        log.info("[gno] event paylaod: {}", payload.toString());
         return slackEventService.handleEvent(payload);
     }
 

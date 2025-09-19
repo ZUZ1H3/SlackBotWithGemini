@@ -1,4 +1,4 @@
-package com.zuzihe.slackbot.service;
+package com.zuzihe.slackbot.slack.infra;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -6,7 +6,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
 import java.util.Map;
-import static com.zuzihe.slackbot.util.SlackBlockBuilder.*;
+
+import static com.zuzihe.slackbot.slack.util.SlackBlockBuilder.section;
+import static com.zuzihe.slackbot.slack.util.SlackBlockBuilder.button;
+import static com.zuzihe.slackbot.slack.util.SlackBlockBuilder.divider;
+import static com.zuzihe.slackbot.slack.util.SlackBlockBuilder.sectionWithButton;
+import static com.zuzihe.slackbot.slack.util.SlackBlockBuilder.urlButton;
+
 
 @Slf4j
 @Component

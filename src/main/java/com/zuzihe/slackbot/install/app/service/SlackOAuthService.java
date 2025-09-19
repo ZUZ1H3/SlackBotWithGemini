@@ -1,19 +1,19 @@
-package com.zuzihe.slackbot.service;
+package com.zuzihe.slackbot.install.app.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zuzihe.slackbot.dto.SlackOAuthResponse;
+import com.zuzihe.slackbot.install.app.web.SlackOAuthResponse;
+import com.zuzihe.slackbot.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import java.net.URI;
+
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -34,17 +34,15 @@ public class SlackOAuthService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final WebClient webClient;
 
-    public ResponseEntity<Void> getInstallRedirect(String state) {
-        String url = "https://slack.com/oauth/v2/authorize"
+    public String getInstallRedirect(String state) {
+        return "https://slack.com/oauth/v2/authorize"
                 + "?client_id=" + slackClientId
                 + "&scope=commands,chat:write"
                 + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
                 + "&state=" + state;
-
-        return ResponseEntity.status(302).location(URI.create(url)).build();
     }
 
-    public ResponseEntity<String> handleCallback(String code, String state) throws JsonProcessingException {
+    public String handleCallback(String code, String state) throws JsonProcessingException {
         log.info("Slack callback 도착! code = {}, state = {}", code, state);
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
@@ -66,14 +64,14 @@ public class SlackOAuthService {
         SlackOAuthResponse response = objectMapper.readValue(rawJson, SlackOAuthResponse.class);
 
         if (!response.isOk()) {
-            return ResponseEntity.status(500).body("Slack OAuth 실패: " + response.getError());
+            throw new CustomException("Slack OAuth 실패: " + response.getError());
         }
 
         saveInstalledWorkspace(response);
-        return ResponseEntity.ok("Slack 앱 설치 완료!");
+        return "Slack 앱 설치 완료!";
     }
 
-    public void saveInstalledWorkspace(SlackOAuthResponse response) {
+    private void saveInstalledWorkspace(SlackOAuthResponse response) {
         if (response.getTeam() == null) {
             log.error("team 정보가 Slack 응답에 없습니다.");
             throw new IllegalStateException("Slack 응답에 team 정보 없음");

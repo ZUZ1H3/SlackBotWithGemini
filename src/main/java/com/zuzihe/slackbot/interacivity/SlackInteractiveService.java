@@ -1,8 +1,10 @@
-package com.zuzihe.slackbot.service;
+package com.zuzihe.slackbot.interacivity;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zuzihe.slackbot.message.infra.GeminiService;
+import com.zuzihe.slackbot.slack.infra.SlackWebClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
