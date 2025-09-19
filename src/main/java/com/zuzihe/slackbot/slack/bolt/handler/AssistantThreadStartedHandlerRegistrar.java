@@ -23,37 +23,8 @@ public class AssistantThreadStartedHandlerRegistrar implements SlackBoltHandlerR
 
     @Override
     public void register(App app) {
-/*
-        // Use middleware to capture unknown event type 'assistant_thread_started'
-        Middleware mw = (req, resp, chain) -> {
-            try {
-                String body = req.getRequestBodyAsString();
-                Map<String, Object> root = objectMapper.readValue(body, new TypeReference<>() {
-                });
-
-                Map<String, Object> event = (Map<String, Object>) root.get("event");
-                if (event != null && event.get("type").equals("assistant_thread_started")) {
-                    Map<String, Object> assistantThread = (Map<String, Object>) event.get("assistant_thread");
-                    if (assistantThread != null) {
-                        String channelId = (String) assistantThread.get("channel_id");
-                        String threadTs = (String) assistantThread.get("thread_ts");
-                        if(channelId!=null && threadTs!=null) {
-                            slackBoltService.handleAssistantThread(channelId, threadTs);
-                        }
-                    }
-                }
-
-            } catch (Exception e) {
-                log.warn("assistant_thread_started parsing failed", e);
-            }
-            return chain.next(req);
-        };
-
-        app.use(mw);
-    }
-    */
-        app.event(AssistantThreadStartedEvent.class, (paylaod, ctx) -> {
-            AssistantThreadStartedEvent event = paylaod.getEvent();
+        app.event(AssistantThreadStartedEvent.class, (payload, ctx) -> {
+            AssistantThreadStartedEvent event = payload.getEvent();
             String channelId = event.getAssistantThread().getChannelId();
             String threadTs = event.getAssistantThread().getThreadTs();
             if(channelId!=null && threadTs!=null) {

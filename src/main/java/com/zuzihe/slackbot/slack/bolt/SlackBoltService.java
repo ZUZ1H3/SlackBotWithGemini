@@ -3,7 +3,7 @@ package com.zuzihe.slackbot.slack.bolt;
 import com.slack.api.model.event.MessageEvent;
 import com.zuzihe.slackbot.message.infra.GeminiService;
 import com.zuzihe.slackbot.slack.bolt.infra.SlackBoltClient;
-import com.zuzihe.slackbot.slack.infra.SlackWebClient;
+import com.zuzihe.slackbot.slack.http.infra.SlackWebClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

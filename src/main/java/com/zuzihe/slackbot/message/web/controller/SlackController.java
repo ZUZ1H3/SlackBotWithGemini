@@ -1,7 +1,7 @@
 package com.zuzihe.slackbot.message.web.controller;
 
 //import com.zuzihe.slackbot.service.SlackCommandService;
-import com.zuzihe.slackbot.message.service.SlackEventService;
+import com.zuzihe.slackbot.slack.http.SlackEventRouter;
 import com.zuzihe.slackbot.interacivity.SlackInteractiveService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SlackController {
 
-    private final SlackEventService slackEventService;
+    private final SlackEventRouter slackEventRouter;
     private final SlackInteractiveService slackInteractiveService;
 
     /* Slack Slash Command 처리
@@ -30,7 +30,7 @@ public class SlackController {
     @PostMapping("/events-legacy")
     public ResponseEntity<String> handleEvent(@RequestBody Map<String, Object> payload) {
         log.info("[gno] event paylaod: {}", payload.toString());
-        return slackEventService.handleEvent(payload);
+        return slackEventRouter.routeEvent(payload);
     }
 
     // Slack Interactive Component 처리

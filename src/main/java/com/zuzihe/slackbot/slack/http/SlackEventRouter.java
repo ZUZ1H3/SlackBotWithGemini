@@ -1,8 +1,8 @@
-package com.zuzihe.slackbot.message.service;
+package com.zuzihe.slackbot.slack.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zuzihe.slackbot.message.infra.GeminiService;
-import com.zuzihe.slackbot.slack.infra.SlackWebClient;
+import com.zuzihe.slackbot.slack.http.infra.SlackWebClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +13,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class SlackEventService {
+public class SlackEventRouter {
     // Slack에서 들어오는 이벤트를 처리하는 메인 서비스
     //  이벤트 타입 더 많아지면 Processor 클래스로 따로 나누는 것 고려
     private final SlackWebClient slackWebClient;
@@ -25,7 +25,7 @@ public class SlackEventService {
      * - type이 url_verification: 최초 Slack Event Subscription 검증 단계
      * - type이 event_callback: 실제 이벤트가 들어오는 경우
      */
-    public ResponseEntity<String> handleEvent(Map<String, Object> payload) {
+    public ResponseEntity<String> routeEvent(Map<String, Object> payload) {
         log.info("event 수신: {}", payload.toString());
         String type = (String) payload.get("type");
 
