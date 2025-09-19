@@ -104,7 +104,7 @@ public class SlackEventService {
      * - 유저가 DM을 보내면 LLM 호출 → 응답을 같은 스레드에 전송
      */
     @Async
-    public void handleDirectMessage(String channel, String text, String userId, String threadTs) {
+    protected void handleDirectMessage(String channel, String text, String userId, String threadTs) {
         try {
             log.info("DM 메시지 수신 - Channel: {}, User: {}, Text: {}", channel, userId, text);
 

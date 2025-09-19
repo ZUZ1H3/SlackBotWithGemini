@@ -50,6 +50,10 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Slack Bolt (Events API / methods client)
+    implementation 'com.slack.api:bolt-jakarta-servlet:1.45.3' // Jakarta Servlet 지원 Bolt SDK
+    implementation 'com.slack.api:slack-api-client:1.45.3'     // Slack Web API 클라이언트
 }
 
 

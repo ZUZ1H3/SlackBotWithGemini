@@ -26,8 +26,8 @@ public class SlackController {
     }
     */
 
-    // Slack Event API 처리
-    @PostMapping("/events")
+    // [LEGACY] Slack Event API 처리 (Bolt로 대체됨)
+    @PostMapping("/events-legacy")
     public ResponseEntity<String> handleEvent(@RequestBody Map<String, Object> payload) {
         log.info("[gno] event paylaod: {}", payload.toString());
         return slackEventService.handleEvent(payload);
