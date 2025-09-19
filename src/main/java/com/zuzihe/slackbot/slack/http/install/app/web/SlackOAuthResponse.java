@@ -1,4 +1,4 @@
-package com.zuzihe.slackbot.install.app.web;
+package com.zuzihe.slackbot.slack.http.install.app.web;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;

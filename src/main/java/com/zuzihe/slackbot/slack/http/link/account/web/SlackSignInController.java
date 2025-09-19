@@ -1,6 +1,6 @@
-package com.zuzihe.slackbot.link.account.web;
+package com.zuzihe.slackbot.slack.http.link.account.web;
 
-import com.zuzihe.slackbot.link.account.service.SlackSignInService;
+import com.zuzihe.slackbot.slack.http.link.account.service.SlackSignInService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

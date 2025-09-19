@@ -1,7 +1,7 @@
-package com.zuzihe.slackbot.message.web.controller;
+package com.zuzihe.slackbot.slack.http.global.web.controller;
 
 //import com.zuzihe.slackbot.service.SlackCommandService;
-import com.zuzihe.slackbot.slack.http.SlackEventRouter;
+import com.zuzihe.slackbot.slack.http.event.SlackEventRouter;
 import com.zuzihe.slackbot.interacivity.SlackInteractiveService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

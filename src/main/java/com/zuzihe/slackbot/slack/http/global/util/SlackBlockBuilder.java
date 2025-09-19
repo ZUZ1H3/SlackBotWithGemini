@@ -1,4 +1,4 @@
-package com.zuzihe.slackbot.slack.http.util;
+package com.zuzihe.slackbot.slack.http.global.util;
 
 import java.util.Map;
 

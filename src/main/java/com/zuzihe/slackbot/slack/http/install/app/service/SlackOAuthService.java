@@ -1,8 +1,8 @@
-package com.zuzihe.slackbot.install.app.service;
+package com.zuzihe.slackbot.slack.http.install.app.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zuzihe.slackbot.install.app.web.SlackOAuthResponse;
+import com.zuzihe.slackbot.slack.http.install.app.web.SlackOAuthResponse;
 import com.zuzihe.slackbot.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
