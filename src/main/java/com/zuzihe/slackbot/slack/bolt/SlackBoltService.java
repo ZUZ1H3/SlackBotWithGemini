@@ -57,18 +57,18 @@ public class SlackBoltService {
     @Async
     public void handleAppHomeOpened(String userId) {
         // Reuse existing WebClient blocks for now
-        slackWebClient.publishAppHome(userId);
+        slackBoltClient.publishAppHome(userId);
     }
 
     @Async
     public void handleAssistantThread(String channelId, String threadTs) {
-        slackWebClient.sendWelcomeMessageWithButtons(channelId, threadTs);
+        slackBoltClient.sendWelcomeMessageWithButtons(channelId, threadTs);
     }
 
     @Async
-    public void handleAppMention(String channel, String text) {
+    public void handleAppMention(String channel, String text, String parentTs) {
         String prompt = geminiService.buildPrompt(text);
         geminiService.callGemini(prompt)
-                .subscribe(answer -> slackBoltClient.sendMessage(channel, answer));
+                .subscribe(answer -> slackBoltClient.sendMessageWithThread(channel, answer, parentTs));
     }
 }
