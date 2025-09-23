@@ -1,4 +1,4 @@
-package com.zuzihe.slackbot.message.infra;
+package com.zuzihe.slackbot.llm;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

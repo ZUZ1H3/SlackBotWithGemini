@@ -4,8 +4,10 @@ import com.slack.api.Slack;
 import com.slack.api.methods.AsyncMethodsClient;
 import com.slack.api.methods.request.chat.ChatMeMessageRequest;
 import com.slack.api.methods.request.chat.ChatPostMessageRequest;
+import com.slack.api.methods.request.conversations.ConversationsOpenRequest;
 import com.slack.api.methods.request.views.ViewsPublishRequest;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
+import com.slack.api.methods.response.conversations.ConversationsOpenResponse;
 import com.slack.api.model.block.LayoutBlock;
 import com.slack.api.model.block.element.BlockElement;
 import com.slack.api.model.view.View;
@@ -63,6 +65,7 @@ public class SlackBoltClient {
                 .userId(userId)
                 .view(view)
                 .build();
+
         clientAsync().viewsPublish(req)
                 .thenAccept(resp -> {
                     if (!resp.isOk()) {
@@ -158,11 +161,11 @@ public class SlackBoltClient {
                 divider(),
                 section(s -> s
                                 .text(markdownText("*아이채터 정보봇*\n최근 대화한 날짜 · *1일 전*"))
-                                .accessory(button(b -> b.text(plainText("채팅")).value("open_docbot_apispec")))
+                                .accessory(button(b -> b.text(plainText("채팅")).value("open_docbot_apispec").actionId("open_docbot_apispec")))
                         ),
                 section(s -> s
                         .text(markdownText("*영업지원 문서봇*\n최근 대화한 날짜 · *2025-08-31 09:15*"))
-                        .accessory(button(b -> b.text(plainText("채팅")).value("open_docbot_sales")))
+                        .accessory(button(b -> b.text(plainText("채팅")).value("open_docbot_sales").actionId("open_docbot_sales")))
                 )
         );
     }
@@ -178,6 +181,60 @@ public class SlackBoltClient {
                                 .value("login_btn"))
                 )))
         );
+    }
+
+    /// 버튼 클릭 후 대화 생성
+    public void openConversationAndSendWelcomeMessageWithChatRoomId(String userId, String chatRoomId) {
+        // 1. DM 채널 열기
+        var openRequest = ConversationsOpenRequest.builder()
+                .users(List.of(userId))
+                .build();
+
+        clientAsync().conversationsOpen(openRequest)
+                .thenAccept(response -> {
+                    if (response.isOk()) {
+                        String channelId = response.getChannel().getId();
+                        log.info("[Bolt] DM 채널 열기 성공 - ChannelId: {}", channelId);
+
+                        // 2. 환영 메시지 전송
+                        sendNewChatWelcomeMessage(channelId, chatRoomId);
+                    } else {
+                        log.error("[Bolt] DM 채널 열기 실패: {}", response.getError());
+                    }
+                })
+                .exceptionally(e -> {
+                    log.error("[Bolt] DM 채널 열기 중 오류", e);
+                    return null;
+                });
+    }
+
+    private void sendNewChatWelcomeMessage(String channelId, String chatRoomId) {
+        List<LayoutBlock> blocks = asBlocks(
+                section(s -> s.text(markdownText("🎉 *새로운 채팅을 시작합니다!*"))),
+                divider(),
+                section(s->s.text(markdownText("현재 진행중인 채팅방: "+ chatRoomId))),
+                section(s -> s.text(markdownText("안녕하세요! 저는 aichatter 봇입니다.\n무엇을 도와드릴까요?"))),
+                section(s -> s.text(markdownText("*💡 예시 질문들:*\n• 오늘 날씨 어때?\n• 프로그래밍 질문하기\n• 창작 도움 요청하기")))
+        );
+
+        var req = ChatPostMessageRequest.builder()
+                .channel(channelId)
+                .text("새로운 채팅을 시작합니다!")
+                .blocks(blocks)
+                .build();
+
+        clientAsync().chatPostMessage(req)
+                .thenAccept(resp -> {
+                    if (!resp.isOk()) {
+                        log.error("[Bolt] 새 채팅 환영 메시지 전송 실패: {}", resp.getError());
+                    } else {
+                        log.info("[Bolt] 새 채팅 환영 메시지 전송 성공 - ChannelId: {}", channelId);
+                    }
+                })
+                .exceptionally(e -> {
+                    log.error("[Bolt] 새 채팅 환영 메시지 전송 중 오류", e);
+                    return null;
+                });
     }
 
 }

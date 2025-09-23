@@ -1,7 +1,7 @@
 package com.zuzihe.slackbot.slack.bolt;
 
 import com.slack.api.model.event.MessageEvent;
-import com.zuzihe.slackbot.message.infra.GeminiService;
+import com.zuzihe.slackbot.llm.GeminiService;
 import com.zuzihe.slackbot.slack.bolt.infra.SlackBoltClient;
 import com.zuzihe.slackbot.slack.http.global.infra.SlackWebClient;
 import lombok.RequiredArgsConstructor;
@@ -70,5 +70,12 @@ public class SlackBoltService {
         String prompt = geminiService.buildPrompt(text);
         geminiService.callGemini(prompt)
                 .subscribe(answer -> slackBoltClient.sendMessageWithThread(channel, answer, parentTs));
+    }
+
+    @Async
+    public void openNewChatWithUser(String userId, String chatRoomId) {
+        log.info("[Bolt] 새로운 채팅 시작 - UserId: {}", userId);
+        // 사용자와의 DM 채널 열고 환영 메시지 전송
+        slackBoltClient.openConversationAndSendWelcomeMessageWithChatRoomId(userId, chatRoomId);
     }
 }

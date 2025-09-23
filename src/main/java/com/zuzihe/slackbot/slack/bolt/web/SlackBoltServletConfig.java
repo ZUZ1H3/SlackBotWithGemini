@@ -15,4 +15,10 @@ public class SlackBoltServletConfig {
         SlackAppServlet servlet = new SlackAppServlet(app);
         return new ServletRegistrationBean<>(servlet, "/api/slack/events");
     }
+
+    @Bean
+    public ServletRegistrationBean<SlackAppServlet> slackInteractivityServlet(App app) {
+        SlackAppServlet servlet = new SlackAppServlet(app);
+        return new ServletRegistrationBean<>(servlet, "/api/slack/interactive");
+    }
 }

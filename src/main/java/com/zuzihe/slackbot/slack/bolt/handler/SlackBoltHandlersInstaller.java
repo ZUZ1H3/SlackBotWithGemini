@@ -16,8 +16,10 @@ public class SlackBoltHandlersInstaller {
     @PostConstruct
     public void installHandlers() {
         for (SlackBoltHandlerRegistrar r : registrars) {
+            System.out.println("Registering handler: " + r.getClass().getSimpleName());
             r.register(app);
         }
+        System.out.println("Total handlers registered: " + registrars.size());
     }
 }
 
