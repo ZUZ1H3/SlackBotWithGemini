@@ -2,7 +2,7 @@ package com.zuzihe.slackbot.slack.http.global.web.controller;
 
 //import com.zuzihe.slackbot.service.SlackCommandService;
 import com.zuzihe.slackbot.slack.http.event.SlackEventRouter;
-import com.zuzihe.slackbot.interacivity.SlackInteractiveService;
+import com.zuzihe.slackbot.slack.http.interacivity.SlackInteractiveService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -34,7 +34,7 @@ public class SlackController {
     }
 
     // Slack Interactive Component 처리
-    @PostMapping(value = "/interactive", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @PostMapping(value = "/interactive-legacy", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<String> handleInteractive(@RequestParam("payload") String payload) {
         return slackInteractiveService.handleInteractive(payload);
     }
