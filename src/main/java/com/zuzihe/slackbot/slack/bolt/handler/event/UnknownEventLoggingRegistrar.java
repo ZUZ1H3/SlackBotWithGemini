@@ -1,4 +1,4 @@
-package com.zuzihe.slackbot.slack.bolt.handler;
+package com.zuzihe.slackbot.slack.bolt.handler.event;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 @Component

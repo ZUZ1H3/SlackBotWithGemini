@@ -13,7 +13,7 @@ public class SlackBoltAppConfig {
     private String signingSecret;
 
     @Value("${slack.botToken:}")
-    private String botToken;
+    private String botToken;    // workspace에 종속적이므로 workspace 구분가능
 
     @Bean
     public App slackApp() {

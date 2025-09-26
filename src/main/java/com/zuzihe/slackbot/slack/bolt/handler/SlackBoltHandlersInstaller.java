@@ -1,6 +1,7 @@
 package com.zuzihe.slackbot.slack.bolt.handler;
 
 import com.slack.api.bolt.App;
+import com.zuzihe.slackbot.slack.bolt.handler.event.SlackBoltHandlerRegistrar;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

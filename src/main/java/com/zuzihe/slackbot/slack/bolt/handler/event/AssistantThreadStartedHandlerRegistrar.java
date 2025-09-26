@@ -1,18 +1,12 @@
-package com.zuzihe.slackbot.slack.bolt.handler;
+package com.zuzihe.slackbot.slack.bolt.handler.event;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.slack.api.bolt.App;
-import com.slack.api.bolt.middleware.Middleware;
-import com.slack.api.bolt.request.Request;
-import com.slack.api.bolt.response.Response;
 import com.slack.api.model.event.AssistantThreadStartedEvent;
 import com.zuzihe.slackbot.slack.bolt.SlackBoltService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 @Slf4j
 @Component

@@ -1,4 +1,4 @@
-package com.zuzihe.slackbot.controller;
+package com.zuzihe.slackbot.global.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

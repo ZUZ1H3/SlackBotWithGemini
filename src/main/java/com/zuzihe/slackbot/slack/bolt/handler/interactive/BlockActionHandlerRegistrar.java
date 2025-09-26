@@ -1,9 +1,8 @@
-package com.zuzihe.slackbot.slack.bolt.handler;
+package com.zuzihe.slackbot.slack.bolt.handler.interactive;
 
 import com.slack.api.bolt.App;
-import com.slack.api.model.block.composition.PlainTextObject;
-import com.slack.api.model.event.MessageEvent;
 import com.zuzihe.slackbot.slack.bolt.SlackBoltService;
+import com.zuzihe.slackbot.slack.bolt.handler.event.SlackBoltHandlerRegistrar;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
