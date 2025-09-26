@@ -241,7 +241,35 @@ public class SlackBoltClient {
                 });
     }
 
-    // "답변 생성 중..." 메시지 전송하고 메시지 타임스탬프 반환
+    public void setThinkingStatus(String channel, String threadTs) {
+        String thinkingText = "가(이) 답변을 생성하고 있습니다 \"\uD83D\uDCAD\"";
+
+        AssistantThreadsSetStatusRequest req = AssistantThreadsSetStatusRequest.builder()
+                .channelId(channel)
+                .threadTs(threadTs)
+                .status(thinkingText)
+                .build();
+
+        clientAsync().assistantThreadsSetStatus(req)
+                .thenAccept(resp -> {
+                    if (resp.isOk()) {
+                        log.info("[Bolt] aichatter 스켈레톤 UI 전송 성공 - Channel: {}", channel);
+                    } else {
+                        log.error("[Bolt] aichatter 스켈레톤 UI 전송 성공: {}", resp.getError());
+                    }
+                })
+                .exceptionally(e -> {
+                    log.error("[Bolt] 답변 생성 중 메시지 전송 실패: {}", e);
+                    return null;
+                });
+
+    }
+
+
+    /**
+     * 답변 생성 중임을 알리는 메서드는 setThinkingStatus() 사용하세요
+     */
+   @Deprecated(forRemoval = true)
     public CompletableFuture<String> sendThinkingMessage(String channel, String threadTs) {
         String thinkingText = "가(이) 답변을 생성하고 있습니다 \"\uD83D\uDCAD\"";
 
@@ -265,32 +293,6 @@ public class SlackBoltClient {
                     log.error("[Bolt] 답변 생성 중 메시지 전송 실패: {}", e);
                     return null;
                 });
-    }
-
-    public void setThinkingStatus(String channel, String threadTs) {
-        String thinkingText = "가(이) 답변을 생성하고 있습니다 \"\uD83D\uDCAD\"";
-
-
-
-        AssistantThreadsSetStatusRequest req = AssistantThreadsSetStatusRequest.builder()
-                .channelId(channel)
-                .threadTs(threadTs)
-                .status(thinkingText)
-                .build();
-
-        clientAsync().assistantThreadsSetStatus(req)
-                .thenAccept(resp -> {
-                    if (resp.isOk()) {
-                        log.info("[Bolt] aichatter 스켈레톤 UI 전송 성공 - Channel: {}", channel);
-                    } else {
-                        log.error("[Bolt] aichatter 스켈레톤 UI 전송 성공: {}", resp.getError());
-                    }
-                })
-                .exceptionally(e -> {
-                    log.error("[Bolt] 답변 생성 중 메시지 전송 실패: {}", e);
-                    return null;
-                });
-
     }
 
     // 기존 메시지를 실제 답변으로 업데이트

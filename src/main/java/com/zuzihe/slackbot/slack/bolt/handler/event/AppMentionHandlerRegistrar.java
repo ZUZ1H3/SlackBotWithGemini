@@ -16,7 +16,7 @@ public class AppMentionHandlerRegistrar implements SlackBoltHandlerRegistrar {
         app.event(AppMentionEvent.class, (payload, ctx) -> {
             var ev = payload.getEvent();
             if (ev.getText() != null && !ev.getText().isBlank()) {
-                slackBoltService.handleAppMention(ev.getChannel(), ev.getText(), ev.getTs());
+                slackBoltService.handleAppMention(ev);
             }
             return ctx.ack();
         });
