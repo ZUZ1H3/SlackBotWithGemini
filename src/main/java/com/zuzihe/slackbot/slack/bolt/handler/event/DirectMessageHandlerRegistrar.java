@@ -1,4 +1,4 @@
-package com.zuzihe.slackbot.slack.bolt.handler;
+package com.zuzihe.slackbot.slack.bolt.handler.event;
 
 import com.slack.api.bolt.App;
 import com.slack.api.model.event.MessageEvent;

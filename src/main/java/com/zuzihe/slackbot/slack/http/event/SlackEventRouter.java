@@ -1,7 +1,7 @@
 package com.zuzihe.slackbot.slack.http.event;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zuzihe.slackbot.message.infra.GeminiService;
+import com.zuzihe.slackbot.llm.GeminiService;
 import com.zuzihe.slackbot.slack.http.global.infra.SlackWebClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

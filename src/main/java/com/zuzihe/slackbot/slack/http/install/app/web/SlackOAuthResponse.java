@@ -8,7 +8,7 @@ import lombok.Data;
 
 public class SlackOAuthResponse {
     private boolean ok;
-    private String access_token;
+    private String access_token;    //BotUserOAuthToken과 동일
     private String bot_user_id;
     private boolean is_enterprise_install;
     private Team team;
