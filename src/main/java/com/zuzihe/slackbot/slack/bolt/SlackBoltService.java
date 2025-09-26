@@ -27,16 +27,28 @@ public class SlackBoltService {
 
         try {
             log.info("[Bolt] DM 수신 - Channel: {}, User: {}, Text: {}", channel, userId, text);
+
+            // 1. 즉시 "답변 생성 중" 메시지 전송
+            String thinkingMessageTs = slackBoltClient.sendThinkingMessage(channel, threadTs).get();
+
+            if (thinkingMessageTs == null) {
+                log.error("[Bolt] 답변 생성 중 메시지 전송 실패");
+                return;
+            }
+
+            // 2. LLM 호출 및 메시지 업데이트
             String prompt = geminiService.buildPrompt(text);
             geminiService.callGemini(prompt).subscribe(
                     answer -> {
                         String safe = convertMarkdownToMrkdwn(answer);
-                        slackBoltClient.sendMessageWithThread(channel, safe, threadTs);
-                        log.info("[Bolt] DM 응답 전송 완료 - Channel: {}", channel);
+                        // 기존 "답변 생성 중" 메시지를 실제 답변으로 업데이트
+                        slackBoltClient.updateMessageWithResponse(channel, thinkingMessageTs, safe);
+                        log.info("[Bolt] DM 응답 업데이트 완료 - Channel: {}", channel);
                     },
                     error -> {
                         log.error("[Bolt] Gemini 호출 실패", error);
-                        slackBoltClient.sendMessageWithThread(channel, "일시적인 오류가 발생했습니다.", threadTs);
+                        // 오류 발생 시에도 메시지 업데이트
+                        slackBoltClient.updateMessageWithResponse(channel, thinkingMessageTs, "일시적인 오류가 발생했습니다.");
                     }
             );
         } catch (Exception e) {
@@ -67,9 +79,36 @@ public class SlackBoltService {
 
     @Async
     public void handleAppMention(String channel, String text, String parentTs) {
-        String prompt = geminiService.buildPrompt(text);
-        geminiService.callGemini(prompt)
-                .subscribe(answer -> slackBoltClient.sendMessageWithThread(channel, answer, parentTs));
+        try {
+            log.info("[Bolt] App Mention 수신 - Channel: {}, Text: {}", channel, text);
+
+            // 1. 즉시 "답변 생성 중" 메시지 전송
+            String thinkingMessageTs = slackBoltClient.sendThinkingMessage(channel, parentTs).get();
+
+            if (thinkingMessageTs == null) {
+                log.error("[Bolt] App Mention 답변 생성 중 메시지 전송 실패");
+                return;
+            }
+
+            // 2. LLM 호출 및 메시지 업데이트
+            String prompt = geminiService.buildPrompt(text);
+            geminiService.callGemini(prompt).subscribe(
+                    answer -> {
+                        String safe = convertMarkdownToMrkdwn(answer);
+                        // 기존 "답변 생성 중" 메시지를 실제 답변으로 업데이트
+                        slackBoltClient.updateMessageWithResponse(channel, thinkingMessageTs, safe);
+                        log.info("[Bolt] App Mention 응답 업데이트 완료 - Channel: {}", channel);
+                    },
+                    error -> {
+                        log.error("[Bolt] App Mention Gemini 호출 실패", error);
+                        // 오류 발생 시에도 메시지 업데이트
+                        slackBoltClient.updateMessageWithResponse(channel, thinkingMessageTs, "일시적인 오류가 발생했습니다.");
+                    }
+            );
+        } catch (Exception e) {
+            log.error("[Bolt] App Mention 처리 중 오류", e);
+            slackBoltClient.sendMessageWithThread(channel, "처리 중 오류가 발생했습니다.", parentTs);
+        }
     }
 
     @Async

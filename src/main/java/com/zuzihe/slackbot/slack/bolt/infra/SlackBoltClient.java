@@ -2,11 +2,14 @@ package com.zuzihe.slackbot.slack.bolt.infra;
 
 import com.slack.api.Slack;
 import com.slack.api.methods.AsyncMethodsClient;
+import com.slack.api.methods.request.assistant.threads.AssistantThreadsSetStatusRequest;
 import com.slack.api.methods.request.chat.ChatMeMessageRequest;
 import com.slack.api.methods.request.chat.ChatPostMessageRequest;
+import com.slack.api.methods.request.chat.ChatUpdateRequest;
 import com.slack.api.methods.request.conversations.ConversationsOpenRequest;
 import com.slack.api.methods.request.views.ViewsPublishRequest;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
+import com.slack.api.methods.response.chat.ChatUpdateResponse;
 import com.slack.api.methods.response.conversations.ConversationsOpenResponse;
 import com.slack.api.model.block.LayoutBlock;
 import com.slack.api.model.block.element.BlockElement;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static com.slack.api.model.block.Blocks.*;
 import static com.slack.api.model.block.composition.BlockCompositions.*;
@@ -233,6 +237,80 @@ public class SlackBoltClient {
                 })
                 .exceptionally(e -> {
                     log.error("[Bolt] 새 채팅 환영 메시지 전송 중 오류", e);
+                    return null;
+                });
+    }
+
+    // "답변 생성 중..." 메시지 전송하고 메시지 타임스탬프 반환
+    public CompletableFuture<String> sendThinkingMessage(String channel, String threadTs) {
+        String thinkingText = "가(이) 답변을 생성하고 있습니다 \"\uD83D\uDCAD\"";
+
+        var req = ChatPostMessageRequest.builder()
+                .channel(channel)
+                .threadTs(threadTs)
+                .text(thinkingText)
+                .build();
+
+        return clientAsync().chatPostMessage(req)
+                .thenApply(resp -> {
+                    if (resp.isOk()) {
+                        log.info("[Bolt] aichatter 스켈레톤 UI 전송 성공 - Channel: {}, Ts: {}", channel, resp.getTs());
+                        return resp.getTs(); // 메시지의 타임스탬프 반환
+                    } else {
+                        log.error("[Bolt] aichatter 스켈레톤 UI 전송 성공: {}", resp.getError());
+                        return null;
+                    }
+                })
+                .exceptionally(e -> {
+                    log.error("[Bolt] 답변 생성 중 메시지 전송 실패: {}", e);
+                    return null;
+                });
+    }
+
+    public void setThinkingStatus(String channel, String threadTs) {
+        String thinkingText = "가(이) 답변을 생성하고 있습니다 \"\uD83D\uDCAD\"";
+
+
+
+        AssistantThreadsSetStatusRequest req = AssistantThreadsSetStatusRequest.builder()
+                .channelId(channel)
+                .threadTs(threadTs)
+                .status(thinkingText)
+                .build();
+
+        clientAsync().assistantThreadsSetStatus(req)
+                .thenAccept(resp -> {
+                    if (resp.isOk()) {
+                        log.info("[Bolt] aichatter 스켈레톤 UI 전송 성공 - Channel: {}", channel);
+                    } else {
+                        log.error("[Bolt] aichatter 스켈레톤 UI 전송 성공: {}", resp.getError());
+                    }
+                })
+                .exceptionally(e -> {
+                    log.error("[Bolt] 답변 생성 중 메시지 전송 실패: {}", e);
+                    return null;
+                });
+
+    }
+
+    // 기존 메시지를 실제 답변으로 업데이트
+    public void updateMessageWithResponse(String channel, String messageTs, String actualResponse) {
+        var req = ChatUpdateRequest.builder()
+                .channel(channel)
+                .ts(messageTs)
+                .text(actualResponse)
+                .build();
+
+        clientAsync().chatUpdate(req)
+                .thenAccept(response -> {
+                    if (response.isOk()) {
+                        log.info("[Bolt] 메시지 업데이트 성공 - Channel: {}, Ts: {}", channel, messageTs);
+                    } else {
+                        log.error("[Bolt] 메시지 업데이트 실패: {}", response.getError());
+                    }
+                })
+                .exceptionally(e -> {
+                    log.error("[Bolt] 메시지 업데이트 중 오류", e);
                     return null;
                 });
     }
